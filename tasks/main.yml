@@ -1,0 +1,67 @@
+- name: install borgbackup
+  apt:
+    name: borgbackup
+    state: present
+
+- name: add borgbackup group
+  group:
+    name: borgbackup
+    system: True
+
+- name: add borgbackup user
+  user:
+    name: borgbackup
+    system: True
+    shell: /bin/bash
+    home: /home/borgbackup
+    groups:
+      - borgbackup
+    append: False
+
+- name: create directories /home/borgbackup/archives/<clients>
+  file:
+    state: directory
+    path: "/home/borgbackup/archives/{{ borgbackup_server_client }}"
+    owner: borgbackup
+    group: borgbackup
+    mode: 0700
+  with_items: "{{ borgbackup_server_clients }}"
+  loop_control:
+    loop_var: borgbackup_server_client
+
+- name: borg init /home/borgbackup/archives/<clients>
+  shell: |
+    BORG_PASSPHRASE="{{ vars['borgbackup_passphrase_' + borgbackup_server_client] }}" borg init --encryption=repokey /home/borgbackup/archives/{{ borgbackup_server_client }}
+  args:
+    executable: /bin/bash
+    chdir: /home/borgbackup
+    creates: "/home/borgbackup/archives/{{ borgbackup_server_client }}/nonce"
+  become: True
+  become_user: borgbackup
+  with_items: "{{ borgbackup_server_clients }}"
+  loop_control:
+    loop_var: borgbackup_server_client
+
+- name: create directories /home/borgbackup/logs
+  file:
+    state: directory
+    path: "/home/borgbackup/logs"
+    owner: borgbackup
+    group: borgbackup
+    mode: 0700
+
+- name: create directory /home/borgbackup/.ssh
+  file:
+    state: directory
+    path: "/home/borgbackup/.ssh"
+    owner: borgbackup
+    group: borgbackup
+    mode: 0700
+
+- name: create prune.sh script
+  template:
+    src: templates/home/borgbackup/prune.sh.j2
+    dest: /home/borgbackup/prune.sh
+    owner: borgbackup
+    group: borgbackup
+    mode: 0500

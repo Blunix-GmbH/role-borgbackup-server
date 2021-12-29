@@ -1,0 +1,34 @@
+#!/bin/bash
+#
+# Prune borgbackup archives
+
+
+
+# Variables
+current_date=$(date +%d_%m_%y-%H_%M_%S)
+
+
+{% for borgbackup_server_client in borgbackup_server_clients %}
+# Prune backups of client {{ borgbackup_server_client }}
+/usr/bin/borg prune \
+    --list \
+    --stats \
+    --show-rc \
+    --save-space \
+    --keep-last \
+    --keep-daily 7 \
+    --keep-weekly 4 \
+    --keep-monthly 6 \
+    --keep-yearly 2 \
+    /home/borgbackup/archives/{{ borgbackup_server_client }} 2>&1 > /home/borgbackup/logs/prune/$current_date.log
+borg_prune_exit_status=$?
+
+# Write prometheus status
+sed -i 's/^borg_prune_exit_status_{{ borgbackup_server_client }}
+sed -n \
+    -e '/^borg_prune_exit_status_{{ borgbackup_server_client }}/!p' \
+    -e '$aborg_prune_exit_status_{{ borgbackup_server_client }} $borg_prune_exit_status' \
+    /var/lib/prometheus-node-textfile-collector/logs/borg_prune.prom
+
+
+{% endfor %}

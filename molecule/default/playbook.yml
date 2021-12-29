@@ -1,0 +1,9 @@
+- name: Converge
+  hosts: all
+  become: True
+  roles:
+    - role-borgbackup-server
+
+  vars:
+    borgbackup_server_clients:
+      - localhost
