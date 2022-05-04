@@ -42,10 +42,10 @@
   loop_control:
     loop_var: borgbackup_server_client
 
-- name: create directories /home/borgbackup/logs
+- name: create directories /home/borgbackup/logs/prune
   file:
     state: directory
-    path: "/home/borgbackup/logs"
+    path: "/home/borgbackup/logs/prune"
     owner: borgbackup
     group: borgbackup
     mode: 0700
@@ -65,3 +65,11 @@
     owner: borgbackup
     group: borgbackup
     mode: 0500
+
+- name: setup /home/borgbackup/prune.sh cronjob
+  cron:
+    name: borgbackup prune
+    user: root
+    job: "/home/borgbackup/prune.sh"
+    hour: "12"
+    minute: "0"
