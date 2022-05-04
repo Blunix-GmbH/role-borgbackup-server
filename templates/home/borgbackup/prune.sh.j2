@@ -10,12 +10,12 @@ current_date=$(date +%d_%m_%y-%H_%M_%S)
 
 {% for borgbackup_server_client in borgbackup_server_clients %}
 # Prune backups of client {{ borgbackup_server_client }}
-/usr/bin/borg prune \
+BORG_PASSPHRASE="{{ vars['borgbackup_passphrase_' + borgbackup_server_client] }}" /usr/bin/borg prune \
     --list \
     --stats \
     --show-rc \
     --save-space \
-    --keep-last \
+    --keep-last 2 \
     --keep-daily 7 \
     --keep-weekly 4 \
     --keep-monthly 6 \
